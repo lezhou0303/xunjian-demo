@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>巡检操作原型样板</title>
+<style>
+:root{
+  --bg:#eef1f5; --card:#fff; --ink:#1f2933; --muted:#5b6773; --line:#dde3ea;
+  --brand:#1f4e8c; --brand-weak:#e8eef7;
+  --gray:#8a94a0; --gray-weak:#eef0f3;
+  --blue:#1e6fd9; --blue-weak:#e6f0fd;
+  --green:#2e7d32; --green-weak:#e7f4e8;
+  --orange:#c36a0a; --orange-weak:#fdf1e2;
+  --red:#c62828; --red-weak:#fdecec;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+button{font:inherit;cursor:pointer}
+.top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:10px 20px;flex-wrap:wrap}
+.top h1{font-size:16px;margin:0;font-weight:600}
+.tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:10px;background:var(--orange-weak);color:var(--orange);white-space:nowrap}
+.seg{display:inline-flex;background:var(--gray-weak);border-radius:8px;padding:3px}
+.seg button{border:0;background:transparent;padding:5px 16px;border-radius:6px;color:var(--muted)}
+.seg button.on{background:#fff;color:var(--brand);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.spacer{flex:1}
+.ghost{border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 12px;color:var(--muted)}
+.ghost:hover{border-color:var(--brand);color:var(--brand)}
+
+/* ---------- 企微端 ---------- */
+.mobile-wrap{display:flex;justify-content:center;gap:32px;padding:24px 16px 40px;flex-wrap:wrap}
+.phone{width:390px;height:800px;background:#fff;border-radius:36px;border:10px solid #1d232b;box-shadow:0 12px 40px rgba(0,0,0,.18);overflow:hidden;display:flex;flex-direction:column;position:relative}
+.statusbar{height:28px;display:flex;justify-content:space-between;align-items:center;padding:0 22px;font-size:12px;color:var(--ink)}
+.wxbar{height:44px;display:flex;align-items:center;justify-content:center;position:relative;border-bottom:1px solid var(--line);font-weight:600;font-size:16px}
+.wxbar .back{position:absolute;left:8px;border:0;background:none;color:var(--brand);font-size:15px;padding:6px 8px}
+.screen{flex:1;overflow-y:auto;background:#f5f7fa}
+.guide{width:300px;align-self:flex-start;background:#fff;border-radius:12px;padding:18px 20px;border:1px solid var(--line)}
+.guide h3{margin:0 0 8px;font-size:15px}
+.guide ol{margin:0;padding-left:20px;color:var(--ink)}
+.guide li{margin:6px 0}
+.guide .hint{margin-top:12px;font-size:12px;color:var(--muted);border-top:1px dashed var(--line);padding-top:10px}
+
+.daybar{padding:14px 16px 6px;display:flex;align-items:center;justify-content:space-between}
+.daybar b{font-size:17px}
+.daybar span{color:var(--muted);font-size:13px}
+.task{background:#fff;margin:10px 12px;border-radius:12px;padding:14px 14px 12px;border:1px solid var(--line)}
+.task .row1{display:flex;align-items:center;justify-content:space-between}
+.task .name{font-size:16px;font-weight:600}
+.task .meta{color:var(--muted);font-size:13px;margin-top:4px}
+.task .res{font-size:13px;margin-top:6px}
+.task .actions{margin-top:10px;display:flex;justify-content:flex-end}
+.pill{font-size:12px;padding:2px 9px;border-radius:10px;white-space:nowrap}
+.p-todo{background:var(--gray-weak);color:var(--gray)}
+.p-doing{background:var(--blue-weak);color:var(--blue)}
+.p-done{background:var(--green-weak);color:var(--green)}
+.p-warn{background:var(--orange-weak);color:var(--orange)}
+.btn{border:0;border-radius:8px;padding:8px 18px;background:var(--brand);color:#fff;font-weight:600}
+.btn.sec{background:var(--brand-weak);color:var(--brand)}
+.btn:disabled{background:#c5ccd5;color:#fff;cursor:not-allowed}
+.foot-note{color:var(--muted);font-size:12px;text-align:center;padding:12px 16px 20px}
+
+.progress{padding:10px 16px 8px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:2}
+.progress .t{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.bar{height:6px;background:var(--gray-weak);border-radius:3px;margin-top:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--blue);width:0;transition:width .2s}
+.group{margin:10px 12px;background:#fff;border-radius:12px;border:1px solid var(--line);overflow:hidden}
+.group h4{margin:0;padding:10px 14px;font-size:14px;background:#fafbfc;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}
+.group h4 small{font-weight:400;color:var(--muted)}
+.item{padding:10px 14px;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.item .txt{font-size:14px}
+.item .ops{display:flex;gap:8px;margin-top:8px}
+.ops button{flex:1;border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 0;color:var(--muted)}
+.ops button.ok.on{background:var(--green-weak);border-color:var(--green);color:var(--green);font-weight:600}
+.ops button.bad.on{background:var(--orange-weak);border-color:var(--orange);color:var(--orange);font-weight:600}
+.ops button:disabled{cursor:default}
+.prob{margin-top:8px;background:#fffaf3;border:1px dashed #e7c08d;border-radius:8px;padding:10px}
+.prob textarea{width:100%;min-height:56px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:inherit;resize:vertical}
+.prob .photo-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.thumb{width:64px;height:64px;border-radius:6px;object-fit:cover;border:1px solid var(--line);background:#eee}
+.prob .gen{margin-top:8px;width:100%}
+.ticket{margin-top:8px;border:1px solid var(--line);border-left:4px solid var(--orange);background:#fff;border-radius:8px;padding:8px 10px;font-size:13px}
+.ticket b{font-size:14px}
+.ticket .k{color:var(--muted)}
+.result-line{font-size:13px;margin-top:4px;color:var(--muted)}
+.bottom{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 14px;display:flex;align-items:center;gap:10px}
+.bottom .left{flex:1;font-size:13px;color:var(--muted)}
+.toast{position:absolute;left:50%;top:90px;transform:translateX(-50%);background:rgba(31,41,51,.92);color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;max-width:320px;text-align:center;z-index:9;display:none}
+
+/* ---------- Web 端 ---------- */
+.web{display:flex;min-height:calc(100vh - 54px)}
+.side{width:200px;background:#fff;border-right:1px solid var(--line);padding:16px 0}
+.side .grp{padding:6px 20px;color:var(--muted);font-size:12px}
+.side a{display:block;padding:8px 20px;color:var(--ink);text-decoration:none}
+.side a.on{background:var(--brand-weak);color:var(--brand);font-weight:600;border-right:3px solid var(--brand)}
+.main{flex:1;padding:20px 24px;min-width:0}
+.main h2{margin:0 0 4px;font-size:18px}
+.sub{color:var(--muted);font-size:13px;margin-bottom:16px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+.stat .n{font-size:24px;font-weight:600}
+.stat .l{color:var(--muted);font-size:13px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:10px;margin-bottom:16px;overflow:hidden}
+.panel h3{margin:0;padding:12px 16px;font-size:15px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.panel h3 small{font-weight:400;color:var(--muted);font-size:12px}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top}
+th{background:#fafbfc;color:var(--muted);font-weight:600}
+tr.click{cursor:pointer}
+tr.click:hover td{background:#f7f9fc}
+tr.sel td{background:var(--brand-weak)}
+.detail{padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.dline h5{margin:0 0 6px;font-size:13px}
+.dline div{font-size:13px;padding:3px 0}
+.ok-t{color:var(--green)}
+.bad-t{color:var(--orange)}
+.empty{padding:16px;color:var(--muted);font-size:13px}
+.webnote{color:var(--muted);font-size:12px;margin-top:4px}
+.web-thumb{width:44px;height:44px;border-radius:4px;object-fit:cover;border:1px solid var(--line)}
+
+@media (max-width:760px){
+  .phone{width:100%;max-width:390px;height:740px}
+  .guide{width:100%;max-width:390px}
+  .side{display:none}
+  .main{padding:16px}
+  .stats{grid-template-columns:1fr}
+  .tablewrap{overflow-x:auto}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>项目经理每日巡检 · 操作原型样板</h1>
+  <span class="tag">模拟演示 · 不接真实系统</span>
+  <div class="seg" role="tablist">
+    <button id="tabM" class="on" onclick="setView('m')">企微端（手机）</button>
+    <button id="tabW" onclick="setView('w')">Web 端（电脑）</button>
+  </div>
+  <div class="spacer"></div>
+  <button class="ghost" onclick="resetDemo()">重新演示</button>
+</div>
+
+<div id="viewM" class="mobile-wrap">
+  <div class="phone">
+    <div class="statusbar"><span id="clock">13:31</span><span>企业微信</span></div>
+    <div class="wxbar"><button class="back" id="backBtn" onclick="goList()" style="display:none">‹ 待办</button><span id="wxTitle">我的待办</span></div>
+    <div class="screen" id="screen"></div>
+    <div class="toast" id="toast"></div>
+  </div>
+  <div class="guide">
+    <h3>演示顺序</h3>
+    <ol>
+      <li>待办里有早、午、晚 3 条巡检工单，早巡已完成</li>
+      <li>点午巡「巡检打卡」，按五条线逐项点“正常”或“有问题”</li>
+      <li>挑一项点“有问题”：选张照片（或用示例图）、写一句话，点「生成报修单」</li>
+      <li>全部点完，点「完成巡检」回到待办</li>
+      <li>切到上方「Web 端」，看刚才这次巡检和报修单</li>
+    </ol>
+    <div class="hint">这是《小白实操教程》4.6 节三轮提示词做出来的参考效果，属于第二层 Demo（他手上那一屏）。你用 AI 做出来的样子会不一样，主流程能点通就行。</div>
+  </div>
+</div>
+
+<div id="viewW" class="web" style="display:none">
+  <nav class="side">
+    <div class="grp">项目经理</div>
+    <a href="javascript:void(0)">工作台</a>
+    <a href="javascript:void(0)" class="on">巡检记录</a>
+    <a href="javascript:void(0)">全部工单</a>
+  </nav>
+  <section class="main" id="web"></section>
+</div>
+
+<script>
+// ---------------- 示例数据 ----------------
+const LINES = [
+  {key:'env', name:'环境品质', items:[
+    {id:'e1', t:'道路广场无垃圾、无积水', loc:'园区道路广场'},
+    {id:'e2', t:'绿化带无枯枝、无踩秃', loc:'绿化带'},
+    {id:'e3', t:'楼栋大堂地面干净、公告栏无过期通知', loc:'楼栋大堂'},
+    {id:'e4', t:'垃圾房不满溢、无明显异味', loc:'垃圾房'}]},
+  {key:'sec', name:'安全秩序', items:[
+    {id:'s1', t:'主出入口道闸正常、门岗在岗', loc:'主出入口'},
+    {id:'s2', t:'消防通道无占用堆物', loc:'消防通道'},
+    {id:'s3', t:'装修区域围挡完好、无违规动火', loc:'装修区域'},
+    {id:'s4', t:'消控室有人值班、值班记录已填写', loc:'消控室'}]},
+  {key:'eq', name:'设备设施', items:[
+    {id:'q1', t:'配电房、水泵房无渗漏、无异响', loc:'配电房 / 水泵房'},
+    {id:'q2', t:'电梯运行无异响、轿厢干净', loc:'电梯'},
+    {id:'q3', t:'门禁刷卡正常', loc:'门禁'}]},
+  {key:'svc', name:'服务状态', items:[
+    {id:'v1', t:'各岗位人员在岗、着装规范', loc:'各岗位'},
+    {id:'v2', t:'服务中心前台有人接待', loc:'服务中心前台'}]},
+  {key:'dg', name:'数字员工与装备', items:[
+    {id:'d1', t:'清洁机器人在充电位或按计划作业、外观无损坏', loc:'清洁机器人充电位'},
+    {id:'d2', t:'巡逻机器人在充电位、外观无损坏', loc:'巡逻机器人充电位'},
+    {id:'d3', t:'本次巡检工单按时推送到了', loc:'企微待办'}]}
+];
+const ALL_ITEMS = LINES.flatMap(l => l.items.map(i => ({...i, line:l.name})));
+const PERSON = '项目经理（示例）';
+const today = new Date();
+const ymd = today.getFullYear() + String(today.getMonth()+1).padStart(2,'0') + String(today.getDate()).padStart(2,'0');
+const dateText = `${today.getMonth()+1} 月 ${today.getDate()} 日`;
+
+function samplePhoto(label){
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240"><rect width="240" height="240" fill="#cfd8e3"/><rect x="20" y="150" width="200" height="60" rx="30" fill="#9fb3c8"/><circle cx="170" cy="70" r="26" fill="#e9eef4"/><text x="120" y="128" font-size="22" text-anchor="middle" fill="#3d4a57" font-family="sans-serif">示例照片</text><text x="120" y="196" font-size="15" text-anchor="middle" fill="#3d4a57" font-family="sans-serif">${label}</text></svg>`;
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+
+function initialState(){
+  const morningResults = {};
+  ALL_ITEMS.forEach(i => morningResults[i.id] = {r:'ok'});
+  morningResults['e1'] = {r:'bad', desc:'2# 楼北侧广场有一处积水，约 1 平方米', photo:samplePhoto('广场积水'), ticket:`BX-${ymd}-001`};
+  return {
+    seq: 1,
+    tasks: [
+      {id:'am', name:'早巡', slot:'07:50–09:00', push:'07:40', status:'done', start:'07:52', end:'08:58', results:morningResults},
+      {id:'pm', name:'午巡', slot:'13:30–15:00', push:'13:20', status:'todo', start:'', end:'', results:{}},
+      {id:'ev', name:'晚巡', slot:'17:00–18:30', push:'16:50', status:'todo', start:'', end:'', results:{}}
+    ],
+    tickets: [
+      {no:`BX-${ymd}-001`, from:'早巡', item:'道路广场无垃圾、无积水', line:'环境品质', loc:'园区道路广场', desc:'2# 楼北侧广场有一处积水，约 1 平方米', photo:samplePhoto('广场积水'), status:'处理中', time:'08:21'}
+    ]
+  };
+}
+let S = initialState();
+let view = 'm';
+let screen = {name:'list', taskId:null};
+let webSel = 'am';
+
+function fmt(m){ return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'); }
+function slotStart(t){ const [h,m]=t.slot.split('–')[0].split(':').map(Number); return h*60+m; }
+// 演示时钟：按计划时段走，不用电脑当前时间
+function demoClock(){
+  if (screen.name==='check'){ const t=task(screen.taskId); if (t.status==='done') return t.end; return fmt(t.cur); }
+  const doing=S.tasks.find(t=>t.status==='doing'); if (doing) return fmt(doing.cur);
+  const next=S.tasks.find(t=>t.status==='todo'); if (next) return fmt(slotStart(next)-5);
+  return '18:35';
+}
+function task(id){ return S.tasks.find(t => t.id === id); }
+function problems(t){ return Object.values(t.results).filter(r => r.r === 'bad'); }
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ---------------- 视图切换 ----------------
+function setView(v){
+  view = v;
+  document.getElementById('viewM').style.display = v==='m' ? 'flex' : 'none';
+  document.getElementById('viewW').style.display = v==='w' ? 'flex' : 'none';
+  document.getElementById('tabM').classList.toggle('on', v==='m');
+  document.getElementById('tabW').classList.toggle('on', v==='w');
+  render();
+}
+function resetDemo(){
+  S = initialState(); screen = {name:'list', taskId:null}; webSel = 'am';
+  render(); toast('已恢复成初始数据');
+}
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.style.display = 'block';
+  clearTimeout(toast._t); toast._t = setTimeout(() => el.style.display='none', 2200);
+}
+
+// ---------------- 企微端 ----------------
+function goList(){ screen = {name:'list', taskId:null}; render(); }
+function openTask(id){
+  const t = task(id);
+  if (t.status === 'todo'){ t.status = 'doing'; t.cur = slotStart(t) + 2; t.start = fmt(t.cur); toast(`已打卡，${t.name}开始 ${t.start}`); }
+  screen = {name:'check', taskId:id}; render();
+  document.getElementById('screen').scrollTop = 0;
+}
+
+function renderList(){
+  document.getElementById('wxTitle').textContent = '我的待办';
+  document.getElementById('backBtn').style.display = 'none';
+  const cards = S.tasks.map(t => {
+    const st = {todo:['待开始','p-todo'], doing:['进行中','p-doing'], done:['已完成','p-done']}[t.status];
+    const p = problems(t).length;
+    let res = '';
+    if (t.status === 'done') res = `<div class="res">${t.start} 开始 · ${t.end} 完成 · ${p ? `<span class="pill p-warn">发现 ${p} 个问题</span>` : '<span class="ok-t">无问题</span>'}</div>`;
+    if (t.status === 'doing') res = `<div class="res">${t.start} 开始 · 已查 ${Object.keys(t.results).length} / ${ALL_ITEMS.length} 项</div>`;
+    const btn = t.status === 'todo' ? `<button class="btn" onclick="openTask('${t.id}')">巡检打卡</button>`
+             : t.status === 'doing' ? `<button class="btn" onclick="openTask('${t.id}')">继续巡检</button>`
+             : `<button class="btn sec" onclick="openTask('${t.id}')">查看结果</button>`;
+    return `<div class="task">
+      <div class="row1"><span class="name">${t.name} · 巡检工单</span><span class="pill ${st[1]}">${st[0]}</span></div>
+      <div class="meta">计划 ${t.slot} · 按 SOP ${t.push} 推送 · 五条线 ${ALL_ITEMS.length} 项</div>
+      ${res}
+      <div class="actions">${btn}</div>
+    </div>`;
+  }).join('');
+  return `<div class="daybar"><b>今天 · ${dateText}</b><span class="tag">模拟演示</span></div>${cards}
+    <div class="foot-note">巡检任务按 SOP 到点出现在待办；点“巡检打卡”开始巡检。</div>`;
+}
+
+function renderCheck(){
+  const t = task(screen.taskId);
+  const ro = t.status === 'done';
+  document.getElementById('wxTitle').textContent = `${t.name} · ${t.slot}`;
+  document.getElementById('backBtn').style.display = 'block';
+  const done = Object.keys(t.results).length;
+  const pendingTickets = Object.values(t.results).filter(r => r.r==='bad' && !r.ticket).length;
+  const groups = LINES.map(l => {
+    const n = l.items.filter(i => t.results[i.id]).length;
+    const rows = l.items.map(i => itemHtml(t, i, l.name, ro)).join('');
+    return `<div class="group"><h4>${l.name}<small>${n} / ${l.items.length}</small></h4>${rows}</div>`;
+  }).join('');
+  const left = ALL_ITEMS.length - done;
+  let bottom;
+  if (ro){
+    bottom = `<div class="left">${t.start} 开始 · ${t.end} 完成 · 发现 ${problems(t).length} 个问题</div><button class="btn sec" onclick="goList()">返回待办</button>`;
+  } else {
+    const can = left === 0 && pendingTickets === 0;
+    const why = left ? `还有 ${left} 项没查` : pendingTickets ? `还有 ${pendingTickets} 个问题没生成报修单` : '都查完了';
+    bottom = `<div class="left">${why}</div><button class="btn" ${can?'':'disabled'} onclick="finishTask()">完成巡检</button>`;
+  }
+  return `<div class="progress"><div class="t"><span>${ro?'本次结果（只读）':'按五条线逐项检查'}</span><span>${done} / ${ALL_ITEMS.length}</span></div>
+      <div class="bar"><i style="width:${done/ALL_ITEMS.length*100}%"></i></div></div>
+    ${groups}<div style="height:8px"></div><div class="bottom">${bottom}</div>`;
+}
+
+function itemHtml(t, i, lineName, ro){
+  const r = t.results[i.id];
+  const locked = ro || (r && r.ticket);
+  let html = `<div class="item" id="it-${i.id}"><div class="txt">${esc(i.t)}</div>`;
+  if (ro){
+    html += r && r.r==='bad' ? `<div class="result-line bad-t">有问题</div>` : `<div class="result-line ok-t">✓ 正常</div>`;
+  } else {
+    html += `<div class="ops">
+      <button class="ok ${r&&r.r==='ok'?'on':''}" ${locked?'disabled':''} onclick="mark('${i.id}','ok')">正常</button>
+      <button class="bad ${r&&r.r==='bad'?'on':''}" ${locked?'disabled':''} onclick="mark('${i.id}','bad')">有问题</button></div>`;
+  }
+  if (r && r.r === 'bad'){
+    if (r.ticket){
+      html += ticketHtml(S.tickets.find(k => k.no === r.ticket));
+    } else if (!ro){
+      html += `<div class="prob">
+        <div class="photo-row">
+          ${r.photo ? `<img class="thumb" src="${r.photo}" alt="问题照片">` : ''}
+          <button class="ghost" onclick="pickPhoto('${i.id}')">${r.photo?'换一张':'拍照 / 选图'}</button>
+          <button class="ghost" onclick="useSample('${i.id}')">用示例图</button>
+        </div>
+        <textarea id="desc-${i.id}" placeholder="写一句话：在哪、看到了什么" oninput="setDesc('${i.id}', this.value)">${esc(r.desc||'')}</textarea>
+        <button class="btn gen" onclick="genTicket('${i.id}')">生成报修单</button>
+      </div>`;
+    }
+  }
+  return html + `</div>`;
+}
+
+function ticketHtml(k){
+  if (!k) return '';
+  return `<div class="ticket"><b>报修单 ${k.no}</b> <span class="pill p-warn">${k.status}</span>
+    <div><span class="k">位置：</span>${esc(k.loc)}（${esc(k.line)}）</div>
+    <div><span class="k">描述：</span>${esc(k.desc)}</div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:4px">${k.photo?`<img class="thumb" src="${k.photo}" alt="">`:'<span class="k">（未附照片）</span>'}
+    <span class="k">来自${esc(k.from)} · ${k.time} 生成</span></div></div>`;
+}
+
+function mark(id, r){
+  const t = task(screen.taskId);
+  const prev = t.results[id] || {};
+  if (!t.results[id]) t.cur += 3;
+  t.results[id] = r === 'ok' ? {r:'ok'} : {r:'bad', desc:prev.desc||'', photo:prev.photo||''};
+  rerenderKeepScroll();
+}
+function setDesc(id, v){ task(screen.taskId).results[id].desc = v; }
+function pickPhoto(id){
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*'; inp.setAttribute('capture','environment');
+  inp.onchange = () => {
+    const f = inp.files && inp.files[0]; if (!f) return;
+    const fr = new FileReader();
+    fr.onload = () => { task(screen.taskId).results[id].photo = fr.result; rerenderKeepScroll(); };
+    fr.readAsDataURL(f);
+  };
+  inp.click();
+}
+function useSample(id){
+  const it = ALL_ITEMS.find(x => x.id === id);
+  task(screen.taskId).results[id].photo = samplePhoto(it.loc); rerenderKeepScroll();
+}
+function genTicket(id){
+  const t = task(screen.taskId); const r = t.results[id];
+  const it = ALL_ITEMS.find(x => x.id === id);
+  if (!r.desc || !r.desc.trim()){ toast('先写一句话：在哪、看到了什么'); return; }
+  S.seq += 1;
+  const no = `BX-${ymd}-${String(S.seq).padStart(3,'0')}`;
+  t.cur += 2;
+  S.tickets.push({no, from:t.name, item:it.t, line:it.line, loc:it.loc, desc:r.desc.trim(), photo:r.photo||'', status:'待派单', time:fmt(t.cur)});
+  r.ticket = no;
+  toast(`已生成报修单 ${no}`);
+  rerenderKeepScroll();
+}
+function finishTask(){
+  const t = task(screen.taskId);
+  t.status = 'done'; t.end = fmt(Math.max(t.cur + 3, slotStart(t) + 45));
+  const p = problems(t).length;
+  screen = {name:'list', taskId:null}; webSel = t.id; render();
+  toast(`${t.name}已完成${p ? `，发现 ${p} 个问题，已生成 ${p} 张报修单` : '，无问题'}`);
+}
+function rerenderKeepScroll(){
+  const sc = document.getElementById('screen'); const y = sc.scrollTop;
+  render(); sc.scrollTop = y;
+}
+
+// ---------------- Web 端 ----------------
+function renderWeb(){
+  const done = S.tasks.filter(t => t.status==='done').length;
+  const probs = S.tasks.reduce((a,t) => a + problems(t).length, 0);
+  const waiting = S.tickets.filter(k => k.status==='待派单').length;
+  const rows = S.tasks.map(t => {
+    const st = {todo:['待开始','p-todo'], doing:['进行中','p-doing'], done:['已完成','p-done']}[t.status];
+    const p = problems(t).length;
+    return `<tr class="click ${webSel===t.id?'sel':''}" onclick="webSel='${t.id}';render()">
+      <td><b>${t.name}</b></td><td>${t.slot}</td><td>${PERSON}</td><td>${t.start||'—'}</td><td>${t.end||'—'}</td>
+      <td><span class="pill ${st[1]}">${st[0]}</span></td><td>${t.status==='todo'?'—':(p?`<span class="bad-t">${p}</span>`:'0')}</td></tr>`;
+  }).join('');
+  const sel = task(webSel);
+  let detail;
+  if (!sel || sel.status === 'todo'){
+    detail = `<div class="empty">${sel?sel.name:''}还没开始，开始后这里显示检查结果。</div>`;
+  } else {
+    detail = `<div class="detail">` + LINES.map(l => `<div class="dline"><h5>${l.name}</h5>` + l.items.map(i => {
+      const r = sel.results[i.id];
+      if (!r) return `<div style="color:var(--gray)">○ ${esc(i.t)}（未查）</div>`;
+      if (r.r === 'ok') return `<div class="ok-t">✓ ${esc(i.t)}</div>`;
+      return `<div class="bad-t">! ${esc(i.t)}<br><span style="color:var(--ink)">${esc(r.desc||'（未写描述）')}</span>${r.ticket?` · <span style="color:var(--muted)">${r.ticket}</span>`:''}</div>`;
+    }).join('') + `</div>`).join('') + `</div>`;
+  }
+  const tks = S.tickets.slice().reverse().map(k => `<tr>
+      <td><b>${k.no}</b></td><td>${k.from} · ${k.time}</td><td>${esc(k.line)}｜${esc(k.item)}</td><td>${esc(k.loc)}</td>
+      <td>${esc(k.desc)}</td><td>${k.photo?`<img class="web-thumb" src="${k.photo}" alt="">`:'—'}</td>
+      <td><span class="pill ${k.status==='待派单'?'p-warn':'p-doing'}">${k.status}</span></td></tr>`).join('');
+  return `<h2>巡检记录</h2>
+    <div class="sub">今天 · ${dateText} · 项目经理每日巡检 <span class="tag">模拟演示</span></div>
+    <div class="stats">
+      <div class="stat"><div class="n">${done} / 3</div><div class="l">今日巡检已完成</div></div>
+      <div class="stat"><div class="n">${probs}</div><div class="l">巡检发现问题</div></div>
+      <div class="stat"><div class="n">${S.tickets.length}</div><div class="l">报修单（待派单 ${waiting}）</div></div>
+    </div>
+    <div class="panel"><h3>今日巡检<small>点一行看这次的检查结果</small></h3>
+      <div class="tablewrap"><table><tr><th>时段</th><th>计划时间</th><th>执行人</th><th>开始</th><th>完成</th><th>状态</th><th>发现问题</th></tr>${rows}</table></div>
+      <h3 style="border-top:1px solid var(--line)">${sel?sel.name:''} · 检查结果<small>${sel&&sel.start?`${sel.start} 开始${sel.end?' · '+sel.end+' 完成':''}`:''}</small></h3>
+      ${detail}
+    </div>
+    <div class="panel"><h3>巡检发现的问题与报修单<small>报修单按工单流程由派单负责人派给维修人员</small></h3>
+      <div class="tablewrap"><table><tr><th>报修单号</th><th>来自</th><th>检查项</th><th>位置</th><th>描述</th><th>照片</th><th>状态</th></tr>${tks}</table></div>
+    </div>
+    <div class="webnote">本页对应开发沟通卡里的“展示（web端）”。</div>`;
+}
+
+// ---------------- 渲染 ----------------
+function render(){
+  document.getElementById('clock').textContent = demoClock();
+  if (view === 'm'){
+    document.getElementById('screen').innerHTML = screen.name === 'list' ? renderList() : renderCheck();
+  } else {
+    document.getElementById('web').innerHTML = renderWeb();
+  }
+}
+render();
+</script>
+</body>
+</html>
